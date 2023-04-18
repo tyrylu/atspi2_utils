@@ -13,10 +13,13 @@ def print_object(object, level):
         print(f"Relations: {relation_descs}")
     if desc := object.get_description():
         print(f"Description: {desc}")
-    try:
+    if "Component in object.get_interfaces()":
         box = object.queryComponent().getExtents(pyatspi.WINDOW_COORDS)
         print(f"Object bounds: {box}")
-    except: pass
+    if "Action" in object.get_interfaces():
+        actions = object.queryAction()
+        for action_idx in range(actions.nActions):
+            print(f"Action {action_idx + 1}: {actions.getName(action_idx)}, {actions.getLocalizedName(action_idx) or 'no localized name'}, {actions.getDescription(action_idx) or 'no description'}, {actions.getKeyBinding(action_idx) or 'no key bindings'}")
     for child in object:
         print_object(child, level + 1)
 

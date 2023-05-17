@@ -2,10 +2,12 @@
 import pyatspi
 import click
 
-def print_object(object, level):
+def print_object(object, level, max_depth):
     def format_rel(rel):
         targets = [rel.get_target(i) for i in range(rel.get_n_targets())]
         return f"Relation of type {rel.relation_type.value_name} to {', '.join(str(o) for o in targets)}"
+    if level > max_depth:
+        return
     print("*" * level + " " + str(object))
     if state_descs := ', '.join(v.value_name for v in object.get_state_set().get_states()):
         print(f"States: {state_descs}")
@@ -24,18 +26,19 @@ def print_object(object, level):
         for action_idx in range(actions.nActions):
             print(f"Action {action_idx + 1}: {actions.getName(action_idx)}, {actions.getLocalizedName(action_idx) or 'no localized name'}, {actions.getDescription(action_idx) or 'no description'}, {actions.getKeyBinding(action_idx) or 'no key bindings'}")
     for child in object:
-        print_object(child, level + 1)
+        print_object(child, level + 1, max_depth)
 
 @click.command
 @click.option("-f", "--focused", help="Print the tree for the next object which gains focus", is_flag=True)
 @click.option("-a", "--nth-app", help="Prints the tree for the nth application", default=None, type=int)
 @click.option("-l", "--list-apps", help="List the currently reachable applications", is_flag=True)
-def main(focused, nth_app, list_apps):
+@click.option("-d", "--max-depth", help="Prints the tree to a given depth", default=None, type=int)
+def main(focused, nth_app, list_apps, max_depth):
     if focused:
         print("Waiting for a focus event...")
         def handler(evt):
             if not evt.detail1: return
-            print_object(evt.source, 1)
+            print_object(evt.source, 1, max_depth)
             pyatspi.Registry.stop()
         pyatspi.Registry.registerEventListener(handler, "object:state-changed:focused")
         pyatspi.Registry.start()
@@ -43,9 +46,9 @@ def main(focused, nth_app, list_apps):
         for idx, app in enumerate(pyatspi.Registry.getDesktop(0)):
             print(f"{idx + 1}: {app.name}")
     elif nth_app is not None:
-        print_object(pyatspi.Registry.getDesktop(0)[nth_app - 1], 0)
+        print_object(pyatspi.Registry.getDesktop(0)[nth_app - 1], 0, max_depth)
     else:
-        print_object(pyatspi.Registry.getDesktop(0), 0)
+        print_object(pyatspi.Registry.getDesktop(0), 0, max_depth)
 
 if __name__ == "__main__":
     main()

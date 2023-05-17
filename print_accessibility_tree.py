@@ -14,8 +14,11 @@ def print_object(object, level):
     if desc := object.get_description():
         print(f"Description: {desc}")
     if "Component in object.get_interfaces()":
-        box = object.queryComponent().getExtents(pyatspi.WINDOW_COORDS)
-        print(f"Object bounds: {box}")
+        try:
+            box = object.queryComponent().getExtents(pyatspi.WINDOW_COORDS)
+            print(f"Object bounds: {box}")
+        except NotImplementedError:
+            pass
     if "Action" in object.get_interfaces():
         actions = object.queryAction()
         for action_idx in range(actions.nActions):

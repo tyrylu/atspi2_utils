@@ -6,7 +6,7 @@ def print_object(object, level, max_depth):
     def format_rel(rel):
         targets = [rel.get_target(i) for i in range(rel.get_n_targets())]
         return f"Relation of type {rel.relation_type.value_name} to {', '.join(str(o) for o in targets)}"
-    if level > max_depth:
+    if max_depth is not None and level > max_depth:
         return
     print("*" * level + " " + str(object))
     if state_descs := ', '.join(v.value_name for v in object.get_state_set().get_states()):

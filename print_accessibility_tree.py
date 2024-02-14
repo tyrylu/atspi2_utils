@@ -4,6 +4,8 @@ gi.require_version("Atspi", "2.0")
 from gi.repository import Atspi
 import time
 import click
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 def repr_object(object):
     return f"{object.get_role_name()} {object.get_name() or 'UNNAMED'}"

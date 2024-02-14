@@ -22,10 +22,10 @@ def print_object(object, level, max_depth):
         print(f"Relations: {relation_descs}")
     if desc := object.get_description():
         print(f"Description: {desc}")
-    if "Component in object.get_interfaces()":
+    if "Component" in object.get_interfaces():
         try:
             box = object.get_component_iface().get_extents(Atspi.CoordType.WINDOW)
-            print(f"Object bounds: {box}")
+            print(f"Object bounds: {box.width}x{box.height} rect at {box.x}, {box.y}")
         except NotImplementedError:
             pass
     if "Action" in object.get_interfaces():

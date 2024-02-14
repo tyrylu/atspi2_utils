@@ -10,8 +10,9 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 def repr_object(object):
     return f"{object.get_role_name()} {object.get_name() or 'UNNAMED'}"
 
-def print_object(object, level, max_depth):
-    up_to_root(object)
+def print_object(object, level, max_depth, print_up_to_root=False):
+    if print_up_to_root:
+        up_to_root(object)
     def format_rel(rel):
         targets = [rel.get_target(i) for i in range(rel.get_n_targets())]
         return f"Relation of type {rel.relation_type.value_name} to {', '.join(repr_object(o) for o in targets)}"

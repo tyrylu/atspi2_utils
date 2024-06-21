@@ -1,4 +1,4 @@
-"""A script which either prints the entire accessibility tree as reachable from the first desktop or the subtree of the object which gains focus as the next a11y event received. This script requires the pyatspi and click python packages."""
+"""A script which either prints the entire accessibility tree as reachable from the first desktop or the subtree of the object which gains focus as the next a11y event received, maybe from a specific app. This script requires the pygobject and click python packages."""
 import gi
 gi.require_version("Atspi", "2.0")
 from gi.repository import Atspi
@@ -55,11 +55,17 @@ def up_to_root(o):
 @click.option("-a", "--nth-app", help="Prints the tree for the nth application", default=None, type=int)
 @click.option("-l", "--list-apps", help="List the currently reachable applications", is_flag=True)
 @click.option("-d", "--max-depth", help="Prints the tree to a given depth", default=None, type=int)
-def main(focused, nth_app, list_apps, max_depth):
+@click.option("-n", "--app-name", help="Prints the focused tree only if the event occurs in an app with the given name", default=None)
+def main(focused, nth_app, list_apps, max_depth, app_name):
     if focused:
-        print("Waiting for a focus event...")
+        if app_name:
+            print(f"Waiting for a focus event in {app_name}...")
+        else:
+                print("Waiting for a focus event...")
         def handler(evt):
             if not evt.detail1: return
+            if app_name and evt.source.get_application().get_name() != app_name:
+                return
             print_object(evt.source, 1, max_depth)
             Atspi.event_quit()
         listener = Atspi.EventListener.new(handler)

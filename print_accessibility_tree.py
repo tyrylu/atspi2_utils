@@ -42,32 +42,28 @@ def print_object(object, level, max_depth, print_up_to_root=False):
         child = object.get_child_at_index(child_idx)
         print_object(child, level + 1, max_depth)
 
-def up_to_root(o):
-    start = time.perf_counter()
-    num_parents = 0
-    while o := o.get_parent():
-        num_parents += 1
-        o.get_role()
-    print(f"up_to_root took {time.perf_counter() - start} seconds for {num_parents} parents")
-
 @click.command
 @click.option("-f", "--focused", help="Print the tree for the next object which gains focus", is_flag=True)
-@click.option("-a", "--nth-app", help="Prints the tree for the nth application", default=None, type=int)
 @click.option("-l", "--list-apps", help="List the currently reachable applications", is_flag=True)
 @click.option("-d", "--max-depth", help="Prints the tree to a given depth", default=None, type=int)
-@click.option("-n", "--app-name", help="Prints the focused tree only if the event occurs in an app with the given name", default=None)
-def main(focused, nth_app, list_apps, max_depth, app_name):
+@click.option("-n", "--app-name", help="Prints the focused tree only if the event occurs in an app with the given name, or prints it tree", default=None)
+@click.option("-c", "--num-focus-events", help="Print the given number of focus events", default=1, type=int)
+def main(focused, list_apps, max_depth, app_name, num_focus_events):
     if focused:
         if app_name:
             print(f"Waiting for a focus event in {app_name}...")
         else:
                 print("Waiting for a focus event...")
+        num_events = 0
         def handler(evt):
-            if not evt.detail1: return
+            nonlocal num_events
             if app_name and evt.source.get_application().get_name() != app_name:
                 return
+            if not evt.detail1:
+                return
+            num_events += 1
             print_object(evt.source, 1, max_depth)
-            Atspi.event_quit()
+            if num_events == num_focus_events: Atspi.event_quit()
         listener = Atspi.EventListener.new(handler)
         listener.register("object:state-changed:focused")
         Atspi.event_main()
@@ -77,10 +73,23 @@ def main(focused, nth_app, list_apps, max_depth, app_name):
             app = desktop.get_child_at_index(idx)
             name = app.get_name()
             print(f"{idx + 1}: {name}")
-    elif nth_app is not None:
-        print_object(Atspi.get_desktop(0).get_child_at_index(nth_app - 1), 0, max_depth)
     else:
-        print_object(Atspi.getDesktop(0), 0, max_depth)
+        desktop = Atspi.get_desktop(0)
+        root = None
+        if not app_name:
+            root = desktop
+        else:
+            root = None
+            for idx in range(desktop.get_child_count()):
+                app = desktop.get_child_at_index(idx)
+                if app.get_name() == app_name:
+                    root = app
+                    break
+            if root is None:
+                print(f"Could not find application {app_name}")
+                return
+
+        print_object(root, 0, max_depth)
 
 if __name__ == "__main__":
     main()
